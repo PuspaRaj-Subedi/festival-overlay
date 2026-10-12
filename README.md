@@ -7,6 +7,8 @@
 Dashain kites, Tihar diyas, Holi colour, Women's Day confetti and Father's Day stars.
 Drawn with pure Canvas 2D, zero dependencies, and date-aware so the right festival appears on the right day.
 
+[![npm](https://img.shields.io/npm/v/festival-overlay.svg)](https://www.npmjs.com/package/festival-overlay)
+[![jsDelivr](https://data.jsdelivr.com/v1/package/npm/festival-overlay/badge)](https://www.jsdelivr.com/package/npm/festival-overlay)
 [![CI](https://github.com/PuspaRaj-Subedi/festival-overlay/actions/workflows/ci.yml/badge.svg)](https://github.com/PuspaRaj-Subedi/festival-overlay/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 [![gzip size](https://img.shields.io/badge/gzipped-~8%20KB-brightgreen.svg)](#-size-budget)
@@ -88,10 +90,17 @@ Paste this before `</body>`. On a festival day it decorates the page for 30 seco
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/festival-overlay@1.0.0/dist/festival-overlay.umd.min.js"
-        integrity="sha384-<hash>" crossorigin="anonymous"></script>
+        integrity="sha384-+4vFiPty/GKOnMXYXAJswpjigc7DMPrxQnqf52srWInAWhNonnhqB6tLjZvMTByf"
+        crossorigin="anonymous"></script>
 ```
 
-`npm run build` prints the `sha384` hash of every file it emits. You can also get the hash from [jsDelivr](https://www.jsdelivr.com/package/npm/festival-overlay) (open the file, then "Copy HTML + SRI"). Use a hash only with an exact version like `@1.0.0`, never with a range like `@1`.
+| File (`@1.0.0`) | `integrity` |
+|---|---|
+| `festival-overlay.umd.min.js` | `sha384-+4vFiPty/GKOnMXYXAJswpjigc7DMPrxQnqf52srWInAWhNonnhqB6tLjZvMTByf` |
+| `festival-overlay.auto.min.js` | `sha384-X8gOikT/SnHx3LoJiVYNooUeJrDX2IPBvfGNzeUx+j4Ec8QbZxTsac5GpkVly50G` |
+| `festival-overlay.esm.min.js` | `sha384-xy20r8OI/wbl4/ilBBX9WjbjIvwQxUKM7n25YyHEBo5FfZeBwYf8SLPWCMx8N2qh` |
+
+These hashes belong to version 1.0.0 only. For other versions, `npm run build` prints the hash of every file, or you can use [jsDelivr](https://www.jsdelivr.com/package/npm/festival-overlay) (open the file, then "Copy HTML + SRI"). Use a hash only with an exact version like `@1.0.0`, never with a range like `@1`, because the file behind a range changes when a new version is released.
 
 ### 5. npm
 
@@ -104,9 +113,6 @@ import FestivalOverlay from 'festival-overlay';
 
 FestivalOverlay.start({ festival: 'auto', banner: true });
 ```
-
-> **Before the first npm release:** the `cdn.jsdelivr.net/npm/...` URLs start working once the package is published to npm. Until then, load the files straight from GitHub through jsDelivr:
-> `https://cdn.jsdelivr.net/gh/PuspaRaj-Subedi/festival-overlay@main/dist/festival-overlay.auto.min.js`
 
 ---
 
