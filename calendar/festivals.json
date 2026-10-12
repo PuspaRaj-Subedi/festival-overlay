@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "festivals": {
+    "womens-day": {
+      "type": "fixed",
+      "month": 3,
+      "day": 8,
+      "windowDays": 1
+    },
+    "fathers-day": {
+      "type": "nthWeekday",
+      "month": 6,
+      "weekday": 0,
+      "nth": 3,
+      "windowDays": 1
+    },
+    "dashain": {
+      "type": "ranges",
+      "ranges": {
+        "2024": ["2024-10-03", "2024-10-12"],
+        "2025": ["2025-09-23", "2025-10-02"],
+        "2026": ["2026-10-11", "2026-10-20"]
+      },
+      "verified": false,
+      "windowDays": 1
+    },
+    "tihar": {
+      "type": "ranges",
+      "ranges": {
+        "2024": ["2024-10-30", "2024-11-03"],
+        "2025": ["2025-10-20", "2025-10-24"],
+        "2026": ["2026-11-08", "2026-11-12"]
+      },
+      "verified": false,
+      "windowDays": 1
+    },
+    "holi": {
+      "type": "ranges",
+      "ranges": {
+        "2024": ["2024-03-24", "2024-03-25"],
+        "2025": ["2025-03-14", "2025-03-15"],
+        "2026": ["2026-03-03", "2026-03-04"]
+      },
+      "verified": false,
+      "windowDays": 1
+    }
+  }
+}

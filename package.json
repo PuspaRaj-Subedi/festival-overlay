@@ -1,0 +1,67 @@
+{
+  "name": "festival-overlay",
+  "version": "1.0.0",
+  "description": "Zero-dependency JavaScript library for animated festival decorations with date-aware auto mode",
+  "keywords": [
+    "festival",
+    "overlay",
+    "animation",
+    "canvas",
+    "dashain",
+    "tihar",
+    "holi",
+    "nepal",
+    "confetti",
+    "cdn",
+    "zero-dependency"
+  ],
+  "homepage": "https://pusparaj-subedi.github.io/festival-overlay/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PuspaRaj-Subedi/festival-overlay.git"
+  },
+  "bugs": {
+    "url": "https://github.com/PuspaRaj-Subedi/festival-overlay/issues"
+  },
+  "author": "Puspa Subedi",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/festival-overlay.cjs",
+  "module": "./dist/festival-overlay.esm.js",
+  "unpkg": "./dist/festival-overlay.umd.min.js",
+  "jsdelivr": "./dist/festival-overlay.umd.min.js",
+  "types": "./dist/festival-overlay.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/festival-overlay.d.ts",
+      "import": "./dist/festival-overlay.esm.js",
+      "require": "./dist/festival-overlay.cjs",
+      "default": "./dist/festival-overlay.umd.min.js"
+    },
+    "./auto": {
+      "default": "./dist/festival-overlay.auto.min.js"
+    },
+    "./themes/*": {
+      "import": "./dist/themes/*.esm.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "sideEffects": [
+    "src/auto.js",
+    "dist/festival-overlay.auto.min.js"
+  ],
+  "files": [
+    "dist",
+    "calendar",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "node build.js",
+    "test": "node --test test/*.test.js",
+    "demo": "node build.js && node server.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}

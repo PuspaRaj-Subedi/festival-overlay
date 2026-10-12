@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Festival Overlay · Live Demo</title>
+  <meta name="description" content="Zero-dependency JavaScript library that adds animated festival decorations (Dashain, Tihar, Holi, Women's Day, Father's Day) to any website with one script tag.">
+  <meta name="theme-color" content="#140c1f">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪔</text></svg>">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #140c1f;
+      --bg-2: #1c1229;
+      --surface: rgba(255, 255, 255, 0.045);
+      --surface-2: rgba(255, 255, 255, 0.08);
+      --border: rgba(255, 255, 255, 0.1);
+      --border-strong: rgba(255, 255, 255, 0.2);
+      --text: #f6f0fa;
+      --muted: #b4a8c4;
+      --faint: #85799a;
+      --ok: #4ade80;
+      --warn: #fbbf24;
+      --off: #94a3b8;
+      /* Accent follows the selected festival (set from JS) */
+      --accent: #ff9f1c;
+      --accent-2: #e5383b;
+      --radius: 18px;
+      --mono: 'JetBrains Mono', ui-monospace, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background:
+        radial-gradient(1200px 600px at 15% -10%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 60%),
+        radial-gradient(900px 500px at 100% 10%, color-mix(in srgb, var(--accent-2) 16%, transparent), transparent 60%),
+        var(--bg);
+      background-attachment: fixed;
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.55;
+      overflow-x: hidden;
+      transition: background 0.6s ease;
+    }
+
+    a { color: inherit; }
+
+    .wrap { width: 100%; max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+
+    /* ---------- Nav ---------- */
+    nav {
+      position: sticky; top: 0; z-index: 10;
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      background: color-mix(in srgb, var(--bg) 70%, transparent);
+      border-bottom: 1px solid var(--border);
+    }
+    nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 60px; gap: 16px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; text-decoration: none; }
+    .brand-mark { font-size: 22px; }
+    .nav-links { display: flex; gap: 6px; align-items: center; }
+    .nav-links a {
+      text-decoration: none; color: var(--muted); font-size: 14px; font-weight: 500;
+      padding: 8px 12px; border-radius: 10px; transition: color .2s, background .2s;
+    }
+    .nav-links a:hover { color: var(--text); background: var(--surface-2); }
+    .nav-links a.gh { color: var(--text); border: 1px solid var(--border-strong); }
+    @media (max-width: 640px) { .nav-links a:not(.gh) { display: none; } }
+
+    /* ---------- Hero ---------- */
+    .hero { padding-top: 72px; padding-bottom: 40px; text-align: center; }
+    .live-pill {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 7px 16px 7px 12px; border-radius: 999px;
+      background: var(--surface-2); border: 1px solid var(--border);
+      font-size: 13px; font-weight: 600; color: var(--muted);
+      margin-bottom: 24px; max-width: 100%;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--off); flex: none; }
+    .dot.on { background: var(--ok); box-shadow: 0 0 0 4px color-mix(in srgb, var(--ok) 22%, transparent); animation: pulse 2s infinite; }
+    .dot.warn { background: var(--warn); }
+    @keyframes pulse { 50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--ok) 6%, transparent); } }
+
+    h1 {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: clamp(2.6rem, 7vw, 4.6rem);
+      font-weight: 800; line-height: 1.04; letter-spacing: -0.02em;
+      margin-bottom: 20px;
+    }
+    h1 .grad {
+      background: linear-gradient(100deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .lede { font-size: clamp(1.02rem, 2.2vw, 1.2rem); color: var(--muted); max-width: 640px; margin: 0 auto 32px; }
+
+    .one-liner {
+      display: flex; align-items: center; gap: 12px;
+      max-width: 720px; margin: 0 auto 18px;
+      background: rgba(0, 0, 0, 0.35); border: 1px solid var(--border);
+      border-radius: 14px; padding: 8px 8px 8px 18px; text-align: left;
+    }
+    .one-liner code {
+      flex: 1; min-width: 0; font-family: var(--mono); font-size: 13px; color: #e9dcf5;
+      white-space: nowrap; overflow-x: auto; scrollbar-width: none;
+    }
+    .one-liner code::-webkit-scrollbar { display: none; }
+    .hero-meta { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px 20px; color: var(--faint); font-size: 13px; }
+    .hero-meta span::before { content: '✓ '; color: var(--ok); }
+
+    /* ---------- Buttons ---------- */
+    .btn {
+      appearance: none; border: 1px solid transparent; cursor: pointer;
+      font: 600 14px/1 'Inter', sans-serif; color: var(--text);
+      padding: 12px 18px; border-radius: 12px; white-space: nowrap;
+      transition: transform .15s, box-shadow .2s, background .2s, border-color .2s;
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn:focus-visible, .chip:focus-visible, .seg button:focus-visible, .theme-card:focus-visible, .tab:focus-visible {
+      outline: 2px solid var(--accent); outline-offset: 2px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #1a0f00;
+      box-shadow: 0 6px 22px color-mix(in srgb, var(--accent) 35%, transparent);
+    }
+    .btn-primary:hover { transform: translateY(-1px); }
+    .btn-ghost { background: var(--surface-2); border-color: var(--border); }
+    .btn-ghost:hover { background: rgba(255,255,255,.13); }
+    .btn-sm { padding: 9px 14px; font-size: 13px; border-radius: 10px; }
+
+    /* ---------- Sections ---------- */
+    section { padding: 36px 0; }
+    .section-head { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+    h2 { font-family: 'Fraunces', Georgia, serif; font-size: clamp(1.6rem, 3.5vw, 2.1rem); font-weight: 600; letter-spacing: -0.01em; }
+    .section-head p { color: var(--muted); font-size: 15px; }
+
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 24px;
+    }
+
+    /* ---------- Theme picker ---------- */
+    .themes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    @media (max-width: 900px) { .themes { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 520px) { .themes { grid-template-columns: 1fr; } }
+
+    .theme-card {
+      position: relative; text-align: left; cursor: pointer;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px; color: var(--text);
+      font: inherit; overflow: hidden;
+      transition: transform .2s, border-color .2s, background .2s;
+    }
+    .theme-card::before {
+      content: ''; position: absolute; inset: 0; opacity: 0; transition: opacity .3s;
+      background: linear-gradient(135deg, color-mix(in srgb, var(--c1) 22%, transparent), color-mix(in srgb, var(--c2) 10%, transparent) 70%);
+    }
+    .theme-card:hover { transform: translateY(-2px); border-color: var(--border-strong); }
+    .theme-card:hover::before { opacity: .5; }
+    .theme-card[aria-pressed="true"] { border-color: var(--c1); box-shadow: 0 0 0 1px var(--c1), 0 10px 30px color-mix(in srgb, var(--c1) 20%, transparent); }
+    .theme-card[aria-pressed="true"]::before { opacity: 1; }
+    .theme-card > * { position: relative; }
+    .tc-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .tc-emoji { font-size: 30px; line-height: 1; }
+    .tc-swatches { display: flex; }
+    .tc-swatches i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--bg-2); margin-left: -4px; }
+    .tc-name { font-weight: 700; font-size: 16px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+    .tc-desc { color: var(--muted); font-size: 13.5px; margin-bottom: 12px; }
+    .tc-date { font-family: var(--mono); font-size: 12px; color: var(--faint); }
+    .tag {
+      font: 600 10.5px/1 'Inter', sans-serif; letter-spacing: .04em; text-transform: uppercase;
+      padding: 4px 7px; border-radius: 6px; background: color-mix(in srgb, var(--ok) 18%, transparent); color: var(--ok);
+    }
+
+    /* ---------- Playground ---------- */
+    .playground { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 16px; }
+    @media (max-width: 860px) { .playground { grid-template-columns: minmax(0, 1fr); } }
+
+    .field { margin-bottom: 20px; }
+    .field-label { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
+    .field-label small { font-weight: 500; color: var(--faint); }
+
+    .seg { display: grid; grid-template-columns: repeat(3, 1fr); background: rgba(0,0,0,.3); border: 1px solid var(--border); border-radius: 12px; padding: 4px; gap: 4px; }
+    .seg button {
+      appearance: none; border: 0; background: transparent; color: var(--muted);
+      font: 600 14px/1 'Inter', sans-serif; padding: 10px; border-radius: 9px; cursor: pointer; transition: background .2s, color .2s;
+    }
+    .seg button[aria-pressed="true"] { background: var(--surface-2); color: var(--text); box-shadow: inset 0 0 0 1px var(--border-strong); }
+
+    input[type="date"], input[type="range"] { width: 100%; }
+    input[type="date"] {
+      background: rgba(0,0,0,.3); border: 1px solid var(--border); border-radius: 12px;
+      color: var(--text); font: 500 14px 'Inter', sans-serif; padding: 11px 14px; color-scheme: dark;
+    }
+    input[type="date"]:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+    input[type="range"] { accent-color: var(--accent); }
+    .date-row { display: flex; gap: 8px; }
+    .date-row input { flex: 1; min-width: 0; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .chip {
+      appearance: none; cursor: pointer; font: 500 12px/1 'Inter', sans-serif; color: var(--muted);
+      background: transparent; border: 1px dashed var(--border-strong); border-radius: 999px; padding: 7px 10px;
+    }
+    .chip:hover { color: var(--text); border-style: solid; }
+
+    .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid var(--border); }
+    .switch-row span { font-size: 14px; font-weight: 500; }
+    .switch-row small { display: block; color: var(--faint); font-size: 12px; font-weight: 400; }
+    .switch { position: relative; width: 44px; height: 26px; flex: none; }
+    .switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; z-index: 1; }
+    .switch .track { position: absolute; inset: 0; background: rgba(255,255,255,.16); border-radius: 99px; transition: background .2s; }
+    .switch .track::after { content: ''; position: absolute; width: 20px; height: 20px; left: 3px; top: 3px; border-radius: 50%; background: #fff; transition: transform .2s; }
+    .switch input:checked + .track { background: var(--accent); }
+    .switch input:checked + .track::after { transform: translateX(18px); }
+    .switch input:focus-visible + .track { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .actions { display: flex; gap: 10px; margin-top: 18px; }
+    .actions .btn { flex: 1; }
+
+    .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+    .stat { background: rgba(0,0,0,.28); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; min-width: 0; }
+    .stat-label { font-size: 11.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--faint); margin-bottom: 6px; }
+    .stat-value { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .stat-value.mono { font-family: var(--mono); font-weight: 500; }
+    .stat.wide { grid-column: 1 / -1; }
+
+    .notice {
+      font-size: 13.5px; color: var(--muted); background: rgba(0,0,0,.25);
+      border: 1px solid var(--border); border-left: 3px solid var(--accent);
+      border-radius: 10px; padding: 12px 14px;
+    }
+    .notice[hidden] { display: none; }
+    .notice strong { color: var(--text); }
+
+    /* ---------- Code ---------- */
+    .tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; margin-bottom: 12px; border-bottom: 1px solid var(--border); }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab {
+      appearance: none; background: transparent; border: 0; cursor: pointer; white-space: nowrap;
+      font: 600 13.5px/1 'Inter', sans-serif; color: var(--faint);
+      padding: 12px 14px; border-bottom: 2px solid transparent; margin-bottom: -1px;
+    }
+    .tab:hover { color: var(--text); }
+    .tab[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); }
+    .code-wrap { position: relative; }
+    pre {
+      background: #0b0711; border: 1px solid var(--border); border-radius: 14px;
+      padding: 20px 20px 20px; padding-right: 96px; overflow-x: auto;
+      font: 13px/1.65 var(--mono); color: #e9dcf5; min-height: 120px;
+    }
+    .code-wrap .btn { position: absolute; top: 12px; right: 12px; }
+    .code-note { margin-top: 10px; font-size: 13px; color: var(--faint); }
+
+    /* ---------- Features ---------- */
+    .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    @media (max-width: 860px) { .features { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 520px) { .features { grid-template-columns: 1fr; } }
+    .feature { padding: 20px; }
+    .feature .ico { font-size: 22px; margin-bottom: 10px; }
+    .feature h3 { font-size: 15.5px; margin-bottom: 4px; }
+    .feature p { font-size: 13.5px; color: var(--muted); }
+
+    /* ---------- Calendar ---------- */
+    .cal { display: grid; gap: 8px; }
+    .cal-row {
+      display: grid; grid-template-columns: 40px 1fr auto; gap: 14px; align-items: center;
+      padding: 14px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    }
+    .cal-row.now { border-color: var(--ok); background: color-mix(in srgb, var(--ok) 7%, transparent); }
+    .cal-emoji { font-size: 24px; text-align: center; }
+    .cal-name { font-weight: 600; }
+    .cal-when { font-size: 13px; color: var(--muted); font-family: var(--mono); }
+    .cal-badge { font-size: 12px; font-weight: 600; color: var(--muted); text-align: right; }
+    .cal-badge.now { color: var(--ok); }
+    .cal-note { font-size: 13px; color: var(--faint); margin-top: 12px; }
+
+    footer { border-top: 1px solid var(--border); margin-top: 40px; padding: 28px 0 40px; color: var(--faint); font-size: 13.5px; }
+    footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+
+    .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; animation: none !important; }
+      html { scroll-behavior: auto; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="wrap">
+      <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true">🪔</span> festival-overlay</a>
+      <div class="nav-links">
+        <a href="#playground">Playground</a>
+        <a href="#embed">Embed</a>
+        <a href="#calendar">Calendar</a>
+        <a class="gh" href="https://github.com/PuspaRaj-Subedi/festival-overlay" target="_blank" rel="noopener">★ GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <main id="top">
+    <header class="hero wrap">
+      <div class="live-pill" role="status" aria-live="polite">
+        <span class="dot" id="hero-dot"></span>
+        <span id="hero-status">Checking today's festival…</span>
+      </div>
+      <h1>Festival magic for<br><span class="grad">any website.</span></h1>
+      <p class="lede">
+        A zero-dependency script that layers animated Dashain kites, Tihar diyas, Holi colour
+        and more over your page. It is date-aware, accessible, and installs with one tag.
+      </p>
+
+      <div class="one-liner">
+        <code id="hero-snippet">&lt;script src="https://cdn.jsdelivr.net/npm/festival-overlay@1/dist/festival-overlay.auto.min.js"&gt;&lt;/script&gt;</code>
+        <button class="btn btn-primary btn-sm" id="hero-copy" type="button">Copy</button>
+      </div>
+      <div class="hero-meta">
+        <span>0 dependencies</span>
+        <span>~8 KB gzipped</span>
+        <span>5 festivals</span>
+        <span>Click anywhere for a burst</span>
+      </div>
+    </header>
+
+    <!-- Theme picker -->
+    <section class="wrap" aria-labelledby="pick-h">
+      <div class="section-head">
+        <h2 id="pick-h">Pick a festival</h2>
+        <p>The overlay sits above this page. The page stays fully clickable.</p>
+      </div>
+      <div class="themes" id="themes" role="group" aria-label="Festival theme"></div>
+    </section>
+
+    <!-- Playground -->
+    <section class="wrap" id="playground" aria-labelledby="play-h">
+      <div class="section-head">
+        <h2 id="play-h">Playground</h2>
+        <p>Every option here maps 1:1 to a library option.</p>
+      </div>
+
+      <div class="playground">
+        <div class="card">
+          <div class="field">
+            <div class="field-label">Intensity <small>intensity</small></div>
+            <div class="seg" id="intensity" role="group" aria-label="Intensity">
+              <button type="button" data-val="low" aria-pressed="false">Low</button>
+              <button type="button" data-val="medium" aria-pressed="true">Medium</button>
+              <button type="button" data-val="high" aria-pressed="false">High</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <div class="field-label"><label for="opacity">Opacity</label> <small id="opacity-val">0.95</small></div>
+            <input type="range" id="opacity" min="0.2" max="1" step="0.05" value="0.95">
+          </div>
+
+          <div class="field">
+            <div class="field-label"><label for="date">Pretend today is…</label> <small>date · used by auto</small></div>
+            <div class="date-row">
+              <input type="date" id="date">
+              <button class="btn btn-ghost btn-sm" id="date-clear" type="button">Today</button>
+            </div>
+            <div class="chips" id="date-chips" aria-label="Jump to a festival date"></div>
+          </div>
+
+          <div class="switch-row">
+            <span>Greeting banner<small>banner: true (Shadow DOM ribbon)</small></span>
+            <label class="switch"><input type="checkbox" id="banner" checked aria-label="Greeting banner"><span class="track"></span></label>
+          </div>
+          <div class="switch-row">
+            <span>Respect reduced motion<small>respectReducedMotion</small></span>
+            <label class="switch"><input type="checkbox" id="rm" checked aria-label="Respect reduced motion"><span class="track"></span></label>
+          </div>
+
+          <div class="actions">
+            <button class="btn btn-primary" id="start" type="button">▶ Start</button>
+            <button class="btn btn-ghost" id="stop" type="button">■ Stop</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="stats">
+            <div class="stat">
+              <div class="stat-label">Status</div>
+              <div class="stat-value"><span class="dot" id="st-dot"></span><span id="st-text">Idle</span></div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Frame rate</div>
+              <div class="stat-value mono" id="fps">— fps</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Requested</div>
+              <div class="stat-value mono" id="st-req">auto</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Rendering</div>
+              <div class="stat-value" id="st-theme">—</div>
+            </div>
+            <div class="stat wide">
+              <div class="stat-label">resolve(date) →</div>
+              <div class="stat-value mono" id="st-resolve">—</div>
+            </div>
+          </div>
+          <p class="notice" id="notice" hidden></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Embed -->
+    <section class="wrap" id="embed" aria-labelledby="embed-h">
+      <div class="section-head">
+        <h2 id="embed-h">Embed it</h2>
+        <p>Snippets update live from the playground settings.</p>
+      </div>
+      <div class="card">
+        <div class="tabs" role="tablist" id="tabs">
+          <button class="tab" role="tab" data-kind="auto" aria-selected="true">One tag (auto)</button>
+          <button class="tab" role="tab" data-kind="umd" aria-selected="false">Script + JS</button>
+          <button class="tab" role="tab" data-kind="esm" aria-selected="false">ESM, one theme</button>
+          <button class="tab" role="tab" data-kind="npm" aria-selected="false">npm</button>
+          <button class="tab" role="tab" data-kind="react" aria-selected="false">React</button>
+        </div>
+        <div class="code-wrap" role="tabpanel">
+          <pre><code id="code"></code></pre>
+          <button class="btn btn-ghost btn-sm" id="copy" type="button">Copy</button>
+        </div>
+        <p class="code-note" id="code-note"></p>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="wrap" aria-labelledby="feat-h">
+      <div class="section-head"><h2 id="feat-h">Built to be a polite guest</h2></div>
+      <div class="features">
+        <div class="card feature"><div class="ico">🪶</div><h3>Zero dependencies</h3><p>Pure Canvas 2D. No images, fonts or frameworks. About 8 KB gzipped for all five themes.</p></div>
+        <div class="card feature"><div class="ico">📅</div><h3>Date-aware auto mode</h3><p>Shows the right festival on the right day and does nothing on other days. The calendar updates over the CDN without a re-deploy.</p></div>
+        <div class="card feature"><div class="ico">🖱️</div><h3>Never in the way</h3><p><code>pointer-events: none</code>, <code>aria-hidden</code>, and an optional auto-stop timer. It never covers content for good.</p></div>
+        <div class="card feature"><div class="ico">♿</div><h3>Reduced motion aware</h3><p>Honours <code>prefers-reduced-motion</code>, and pauses when the tab is hidden to save battery.</p></div>
+        <div class="card feature"><div class="ico">⚡</div><h3>Zero-allocation loop</h3><p>Pooled particles, time-based motion, DPR capped at 2, and a debounced resize. It holds 60 fps on mid-range phones.</p></div>
+        <div class="card feature"><div class="ico">🧩</div><h3>Pluggable themes</h3><p>A new festival is one theme file plus one calendar entry. The engine never changes.</p></div>
+      </div>
+    </section>
+
+    <!-- Calendar -->
+    <section class="wrap" id="calendar" aria-labelledby="cal-h">
+      <div class="section-head">
+        <h2 id="cal-h">Festival calendar</h2>
+        <p>What <code>festival: 'auto'</code> will pick, from the bundled calendar.</p>
+      </div>
+      <div class="cal" id="cal"></div>
+      <p class="cal-note">Lunar festivals (Dashain, Tihar, Holi) are stored as data, not computed, and are marked <em>unverified</em> until a maintainer confirms them against the official Nepali calendar.</p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>MIT licensed · Pure Canvas 2D · No tracking</span>
+      <span>
+        <a href="https://github.com/PuspaRaj-Subedi/festival-overlay" target="_blank" rel="noopener">GitHub</a> ·
+        <a href="https://github.com/PuspaRaj-Subedi/festival-overlay#readme" target="_blank" rel="noopener">Docs</a> ·
+        <a href="https://github.com/PuspaRaj-Subedi/festival-overlay/issues" target="_blank" rel="noopener">Issues</a>
+      </span>
+    </div>
+  </footer>
+
+  <!-- The demo uses the same UMD bundle that the CDN serves -->
+  <script src="./dist/festival-overlay.umd.js"></script>
+  <script>
+  (function () {
+    var CDN = 'https://cdn.jsdelivr.net/npm/festival-overlay@1/dist/';
+
+    // Display metadata only; the visuals come from the library's themes.
+    var META = {
+      auto:          { emoji: '✨', name: 'Auto',          desc: 'Picks the festival for the date. Does nothing on ordinary days.', c: ['#c084fc', '#f472b6'] },
+      dashain:       { emoji: '🪁', name: 'Dashain',       desc: 'Flying kites, falling sayapatri petals, red tika glow.',           c: ['#ff9f1c', '#e5383b'] },
+      tihar:         { emoji: '🪔', name: 'Tihar',         desc: 'Twinkling light strings, glowing diyas, marigold petals.',         c: ['#ffb300', '#e91e63'] },
+      'womens-day':  { emoji: '🌸', name: "Women's Day",   desc: 'Purple and gold confetti with rising flowers.',                     c: ['#a855f7', '#facc15'] },
+      'fathers-day': { emoji: '👔', name: "Father's Day",  desc: 'Floating stars, balloons and neckties.',                            c: ['#38bdf8', '#6366f1'] },
+      holi:          { emoji: '🎨', name: 'Holi',          desc: 'Gulal bursts, pichkaari streams and colour balloons.',              c: ['#22d3ee', '#ec4899'] }
+    };
+    var ORDER = ['auto', 'dashain', 'tihar', 'holi', 'womens-day', 'fathers-day'];
+
+    var state = { festival: 'auto', intensity: 'medium', opacity: 0.95, date: '', banner: true, rm: true, snippet: 'auto' };
+    var calendar = null;
+    var runToken = 0;
+
+    var $ = function (id) { return document.getElementById(id); };
+    function el(tag, cls, text) {
+      var n = document.createElement(tag);
+      if (cls) n.className = cls;
+      if (text != null) n.textContent = text;
+      return n;
+    }
+    function pad(n) { return String(n).padStart(2, '0'); }
+    function iso(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+    function parse(s) { var p = s.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+    function fmt(d) { return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }); }
+    function fmtShort(d) { return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); }
+    function camel(id) { return id.replace(/-(\w)/g, function (_, c) { return c.toUpperCase(); }); }
+    function reducedMotion() { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
+
+    function setAccent(id) {
+      var c = META[id] ? META[id].c : META.auto.c;
+      document.documentElement.style.setProperty('--accent', c[0]);
+      document.documentElement.style.setProperty('--accent-2', c[1]);
+    }
+
+    // ---------- Calendar helpers (mirror the bundled festivals.json) ----------
+    function occurrences(id, entry, year) {
+      if (!entry) return null;
+      if (entry.type === 'fixed') {
+        var d = new Date(year, entry.month - 1, entry.day);
+        return [d, d];
+      }
+      if (entry.type === 'nthWeekday') {
+        var first = new Date(year, entry.month - 1, 1);
+        var offset = (entry.weekday - first.getDay() + 7) % 7;
+        var day = new Date(year, entry.month - 1, 1 + offset + (entry.nth - 1) * 7);
+        return [day, day];
+      }
+      if (entry.type === 'ranges' && entry.ranges && entry.ranges[year]) {
+        return [parse(entry.ranges[year][0]), parse(entry.ranges[year][1])];
+      }
+      return null;
+    }
+
+    function nextOccurrence(id, from) {
+      if (!calendar || !calendar.festivals[id]) return null;
+      var entry = calendar.festivals[id];
+      for (var y = from.getFullYear(); y <= from.getFullYear() + 1; y++) {
+        var r = occurrences(id, entry, y);
+        if (r && r[1] >= from) return { start: r[0], end: r[1] };
+      }
+      return null;
+    }
+
+    function todayRef() { return state.date ? parse(state.date) : new Date(new Date().toDateString()); }
+
+    // ---------- Theme cards ----------
+    function renderThemes() {
+      var box = $('themes');
+      box.textContent = '';
+      var today = todayRef();
+      var active = FestivalOverlay.resolve(state.date || undefined);
+      ORDER.forEach(function (id) {
+        var m = META[id];
+        if (id !== 'auto' && FestivalOverlay.themes.indexOf(id) === -1) return;
+        var b = el('button', 'theme-card');
+        b.type = 'button';
+        b.style.setProperty('--c1', m.c[0]);
+        b.style.setProperty('--c2', m.c[1]);
+        b.setAttribute('aria-pressed', String(state.festival === id));
+        b.dataset.id = id;
+
+        var top = el('div', 'tc-top');
+        top.appendChild(el('span', 'tc-emoji', m.emoji));
+        var sw = el('span', 'tc-swatches');
+        m.c.forEach(function (c) { var i = el('i'); i.style.background = c; sw.appendChild(i); });
+        top.appendChild(sw);
+        b.appendChild(top);
+
+        var name = el('div', 'tc-name', m.name);
+        if (id === active || (id === 'auto' && active)) name.appendChild(el('span', 'tag', id === 'auto' ? META[active].name : 'Live'));
+        b.appendChild(name);
+        b.appendChild(el('div', 'tc-desc', m.desc));
+
+        var dateText = id === 'auto' ? "festival: 'auto'" : 'Date not in calendar yet';
+        if (id !== 'auto') {
+          var n = nextOccurrence(id, today);
+          if (n) dateText = n.start.getTime() === n.end.getTime() ? fmt(n.start) : fmtShort(n.start) + ' – ' + fmt(n.end);
+        }
+        b.appendChild(el('div', 'tc-date', dateText));
+
+        b.addEventListener('click', function () {
+          state.festival = id;
+          setAccent(id);
+          renderThemes();
+          run();
+          renderSnippet();
+        });
+        box.appendChild(b);
+      });
+    }
+
+    // ---------- Date chips ----------
+    function renderChips() {
+      var box = $('date-chips');
+      box.textContent = '';
+      var today = new Date(new Date().toDateString());
+      ['dashain', 'tihar', 'holi', 'womens-day', 'fathers-day'].forEach(function (id) {
+        var n = nextOccurrence(id, today);
+        if (!n) return;
+        var c = el('button', 'chip', META[id].emoji + ' ' + META[id].name);
+        c.type = 'button';
+        c.title = 'Pretend today is ' + fmt(n.start);
+        c.addEventListener('click', function () {
+          state.date = iso(n.start);
+          $('date').value = state.date;
+          state.festival = 'auto';
+          setAccent(id);
+          renderThemes();
+          run();
+          renderSnippet();
+        });
+        box.appendChild(c);
+      });
+    }
+
+    // ---------- Calendar list ----------
+    function renderCalendar() {
+      var box = $('cal');
+      box.textContent = '';
+      var today = new Date(new Date().toDateString());
+      var rows = [];
+      Object.keys(META).forEach(function (id) {
+        if (id === 'auto') return;
+        var n = nextOccurrence(id, today);
+        rows.push({ id: id, n: n });
+      });
+      rows.sort(function (a, b) { return (a.n ? a.n.start : Infinity) - (b.n ? b.n.start : Infinity); });
+      rows.forEach(function (r) {
+        var now = r.n && r.n.start <= today && r.n.end >= today;
+        var row = el('div', 'cal-row' + (now ? ' now' : ''));
+        row.appendChild(el('div', 'cal-emoji', META[r.id].emoji));
+        var mid = el('div');
+        mid.appendChild(el('div', 'cal-name', META[r.id].name));
+        var when = 'No date in the calendar yet';
+        if (r.n) when = r.n.start.getTime() === r.n.end.getTime() ? fmt(r.n.start) : fmtShort(r.n.start) + ' – ' + fmt(r.n.end);
+        var entry = calendar.festivals[r.id];
+        if (entry && entry.type === 'ranges' && entry.verified === false) when += ' · unverified';
+        if (entry && entry.type === 'nthWeekday') when += ' · 3rd Sunday of June';
+        mid.appendChild(el('div', 'cal-when', when));
+        row.appendChild(mid);
+        var badge = 'later';
+        if (now) badge = '● Today';
+        else if (r.n) {
+          var days = Math.round((r.n.start - today) / 86400000);
+          badge = 'in ' + days + (days === 1 ? ' day' : ' days');
+        }
+        row.appendChild(el('div', 'cal-badge' + (now ? ' now' : ''), badge));
+        box.appendChild(row);
+      });
+    }
+
+    // ---------- Hero status ----------
+    function renderHero() {
+      var id = FestivalOverlay.resolve();
+      var dot = $('hero-dot');
+      if (id) {
+        dot.className = 'dot on';
+        $('hero-status').textContent = META[id].emoji + ' ' + META[id].name + ' is live today, so auto mode is showing it now';
+      } else {
+        dot.className = 'dot';
+        var next = null;
+        var today = new Date(new Date().toDateString());
+        Object.keys(META).forEach(function (k) {
+          if (k === 'auto') return;
+          var n = nextOccurrence(k, today);
+          if (n && (!next || n.start < next.n.start)) next = { id: k, n: n };
+        });
+        $('hero-status').textContent = next
+          ? 'No festival today · next up: ' + META[next.id].name + ', ' + fmtShort(next.n.start)
+          : 'No festival today';
+      }
+    }
+
+    // ---------- Running the overlay ----------
+    function setStatus(kind, text) {
+      $('st-dot').className = 'dot' + (kind === 'on' ? ' on' : kind === 'warn' ? ' warn' : '');
+      $('st-text').textContent = text;
+    }
+    function notice(text) {
+      var n = $('notice');
+      if (!text) { n.hidden = true; return; }
+      n.hidden = false;
+      n.textContent = text;
+    }
+
+    async function run() {
+      var token = ++runToken;
+      FestivalOverlay.stop();
+
+      var resolved = FestivalOverlay.resolve(state.date || undefined);
+      $('st-req').textContent = state.festival === 'auto' && state.date ? "auto @ " + state.date : state.festival;
+      $('st-resolve').textContent = (resolved ? "'" + resolved + "'" : 'null') + (state.date ? '   // ' + state.date : '   // today');
+      setStatus('warn', 'Starting…');
+
+      await FestivalOverlay.start({
+        festival: state.festival,
+        intensity: state.intensity,
+        opacity: state.opacity,
+        banner: state.banner,
+        date: state.date || undefined,
+        respectReducedMotion: state.rm,
+        // The demo always uses the bundled calendar so results match the cards.
+        calendarUrl: false
+      });
+      if (token !== runToken) return;
+
+      var shown = state.festival === 'auto' ? resolved : state.festival;
+      if (FestivalOverlay.isRunning()) {
+        setStatus('on', 'Running');
+        $('st-theme').textContent = META[shown] ? META[shown].emoji + ' ' + META[shown].name : shown;
+        notice('');
+      } else {
+        $('st-theme').textContent = '—';
+        if (state.rm && reducedMotion()) {
+          setStatus('', 'Skipped');
+          notice('Your system asks for reduced motion, so the overlay respects it and does not animate. Turn off “Respect reduced motion” to preview anyway.');
+        } else if (state.festival === 'auto') {
+          setStatus('', 'Nothing to show');
+          notice('No festival is active on this date, so auto mode stays silent and start() does not throw. Pick a date chip or a specific festival.');
+        } else {
+          setStatus('', 'Stopped');
+        }
+      }
+    }
+
+    // ---------- Snippets ----------
+    function renderSnippet() {
+      var f = state.festival, i = state.intensity, b = state.banner;
+      var theme = f === 'auto' ? 'tihar' : f;
+      var code = '', note = '';
+      var opts = "festival: '" + f + "', intensity: '" + i + "'" + (b ? ', banner: true' : '') + (state.opacity !== 0.95 ? ', opacity: ' + state.opacity : '');
+
+      if (state.snippet === 'auto') {
+        code = '<script src="' + CDN + 'festival-overlay.auto.min.js"\n' +
+          '        data-festival="' + f + '"\n' +
+          '        data-intensity="' + i + '"\n' +
+          '        data-duration="30000"\n' +
+          '        data-banner="' + b + '"></' + 'script>';
+        note = 'Paste before </body>. With festival "auto", it stays invisible on ordinary days and stops itself after 30 s.';
+      } else if (state.snippet === 'umd') {
+        code = '<script src="' + CDN + 'festival-overlay.umd.min.js"></' + 'script>\n<script>\n  FestivalOverlay.start({ ' + opts + ' });\n</' + 'script>';
+        note = 'Exposes window.FestivalOverlay with start(), stop(), toggle(), isRunning(), create(), resolve().';
+      } else if (state.snippet === 'esm') {
+        var v = camel(theme);
+        code = '<script type="module">\n' +
+          "  import FestivalOverlay from '" + CDN + "festival-overlay.esm.min.js';\n" +
+          '  import ' + v + " from '" + CDN + 'themes/' + theme + ".esm.js';\n\n" +
+          '  FestivalOverlay.register(' + v + ');\n' +
+          "  FestivalOverlay.start({ festival: '" + theme + "', intensity: '" + i + "' });\n</" + 'script>';
+        note = 'Each theme is also published as its own ES module (about 1.5 KB gzipped).';
+      } else if (state.snippet === 'npm') {
+        code = 'npm install festival-overlay\n\n' +
+          "import FestivalOverlay from 'festival-overlay';\n\n" +
+          'FestivalOverlay.start({ ' + opts + ' });\n// later\nFestivalOverlay.stop();';
+        note = 'Importing is SSR-safe: nothing touches window or document until start() runs.';
+      } else {
+        code = "import { useEffect } from 'react';\nimport FestivalOverlay from 'festival-overlay';\n\n" +
+          'export function Festive() {\n  useEffect(() => {\n    const c = FestivalOverlay.create({ ' + opts + ' });\n    c.start();\n    return () => c.stop();\n  }, []);\n  return null;\n}';
+        note = 'Use create() for a per-component instance. stop() removes the canvas and every listener.';
+      }
+      $('code').textContent = code;
+      $('code-note').textContent = note;
+    }
+
+    function copy(text, btn) {
+      var done = function () { var t = btn.textContent; btn.textContent = 'Copied ✓'; setTimeout(function () { btn.textContent = t; }, 1600); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, function () {});
+    }
+
+    // ---------- Wire up controls ----------
+    document.querySelectorAll('#intensity button').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        state.intensity = btn.dataset.val;
+        document.querySelectorAll('#intensity button').forEach(function (b) { b.setAttribute('aria-pressed', String(b === btn)); });
+        run(); renderSnippet();
+      });
+    });
+
+    var opacityTimer = null;
+    $('opacity').addEventListener('input', function (e) {
+      state.opacity = parseFloat(e.target.value);
+      $('opacity-val').textContent = state.opacity.toFixed(2);
+      renderSnippet();
+      clearTimeout(opacityTimer);
+      opacityTimer = setTimeout(run, 150);
+    });
+
+    $('date').addEventListener('change', function (e) {
+      state.date = e.target.value;
+      if (state.date) state.festival = 'auto';
+      var r = FestivalOverlay.resolve(state.date || undefined);
+      setAccent(r || 'auto');
+      renderThemes(); run(); renderSnippet();
+    });
+    $('date-clear').addEventListener('click', function () {
+      state.date = '';
+      $('date').value = '';
+      setAccent(state.festival === 'auto' ? (FestivalOverlay.resolve() || 'auto') : state.festival);
+      renderThemes(); run();
+    });
+
+    $('banner').addEventListener('change', function (e) { state.banner = e.target.checked; run(); renderSnippet(); });
+    $('rm').addEventListener('change', function (e) { state.rm = e.target.checked; run(); });
+    $('start').addEventListener('click', run);
+    $('stop').addEventListener('click', function () {
+      runToken++;
+      FestivalOverlay.stop();
+      setStatus('', 'Stopped');
+      $('st-theme').textContent = '—';
+      notice('stop() cancelled the animation loop and removed the canvas, the banner and every listener.');
+    });
+
+    document.querySelectorAll('#tabs .tab').forEach(function (t) {
+      t.addEventListener('click', function () {
+        state.snippet = t.dataset.kind;
+        document.querySelectorAll('#tabs .tab').forEach(function (x) { x.setAttribute('aria-selected', String(x === t)); });
+        renderSnippet();
+      });
+    });
+    $('copy').addEventListener('click', function () { copy($('code').textContent, $('copy')); });
+    $('hero-copy').addEventListener('click', function () { copy($('hero-snippet').textContent, $('hero-copy')); });
+
+    // ---------- FPS meter ----------
+    var frames = 0, last = performance.now();
+    (function tick(now) {
+      frames++;
+      if (now - last >= 1000) {
+        $('fps').textContent = FestivalOverlay.isRunning() ? Math.round(frames * 1000 / (now - last)) + ' fps' : '— fps';
+        frames = 0; last = now;
+      }
+      requestAnimationFrame(tick);
+    })(performance.now());
+
+    // ---------- Boot ----------
+    function boot(cal) {
+      calendar = cal;
+      var todayId = FestivalOverlay.resolve();
+      // On an ordinary day, open with Tihar so first-time visitors see something.
+      if (!todayId) state.festival = 'tihar';
+      setAccent(todayId || state.festival);
+      renderHero(); renderThemes(); renderChips(); renderCalendar(); renderSnippet();
+      run();
+    }
+
+    fetch('./dist/festivals.json')
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+      .then(boot)
+      .catch(function () { boot({ festivals: {} }); });
+  })();
+  </script>
+</body>
+</html>

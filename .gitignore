@@ -1,0 +1,8 @@
+node_modules/
+*.log
+.DS_Store
+
+# Local AI-agent tooling (not part of the library)
+.claude/
+.agents/
+skills-lock.json
