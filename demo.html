@@ -5,19 +5,81 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Festival Overlay · Live Demo</title>
   <meta name="description" content="Zero-dependency JavaScript library that adds animated festival decorations (Dashain, Tihar, Holi, Women's Day, Father's Day) to any website with one script tag.">
-  <meta name="theme-color" content="#140c1f">
+  <meta name="theme-color" content="#fbf6ef" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#140c1f" media="(prefers-color-scheme: dark)">
+  <script>
+    try { var t = localStorage.getItem('fo-theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪔</text></svg>">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
   <style>
     :root {
+      color-scheme: light;
+      --bg: #fbf6ef;
+      --bg-2: #ffffff;
+      --surface: rgba(255, 255, 255, 0.72);
+      --surface-2: rgba(70, 40, 90, 0.06);
+      --inset: rgba(70, 40, 90, 0.05);
+      --hover: rgba(70, 40, 90, 0.1);
+      --track: rgba(70, 40, 90, 0.2);
+      --border: rgba(70, 40, 90, 0.12);
+      --border-strong: rgba(70, 40, 90, 0.24);
+      --text: #22152e;
+      --muted: #574a63;
+      --faint: #6e6179;
+      --ok: #15803d;
+      --warn: #b45309;
+      --off: #94a3b8;
+      /* Code blocks stay dark in both modes */
+      --code-bg: #1d1427;
+      --code-text: #f1e6fa;
+      --glow: 14%;
+      /* Accent follows the selected festival (set from JS); the -ink variants darken it so text on light stays readable */
+      --accent: #ff9f1c;
+      --accent-2: #e5383b;
+      --accent-ink: color-mix(in srgb, var(--accent) 70%, #000);
+      --accent-2-ink: color-mix(in srgb, var(--accent-2) 80%, #000);
+      --radius: 18px;
+      --mono: 'JetBrains Mono', ui-monospace, monospace;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg: #140c1f;
+        --bg-2: #1c1229;
+        --surface: rgba(255, 255, 255, 0.045);
+        --surface-2: rgba(255, 255, 255, 0.08);
+        --inset: rgba(0, 0, 0, 0.3);
+        --hover: rgba(255, 255, 255, 0.13);
+        --track: rgba(255, 255, 255, 0.16);
+        --border: rgba(255, 255, 255, 0.1);
+        --border-strong: rgba(255, 255, 255, 0.2);
+        --text: #f6f0fa;
+        --muted: #b4a8c4;
+        --faint: #85799a;
+        --ok: #4ade80;
+        --warn: #fbbf24;
+        --code-bg: #0b0711;
+        --code-text: #e9dcf5;
+        --glow: 22%;
+        --accent-ink: var(--accent);
+        --accent-2-ink: var(--accent-2);
+      }
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
       --bg: #140c1f;
       --bg-2: #1c1229;
       --surface: rgba(255, 255, 255, 0.045);
       --surface-2: rgba(255, 255, 255, 0.08);
+      --inset: rgba(0, 0, 0, 0.3);
+      --hover: rgba(255, 255, 255, 0.13);
+      --track: rgba(255, 255, 255, 0.16);
       --border: rgba(255, 255, 255, 0.1);
       --border-strong: rgba(255, 255, 255, 0.2);
       --text: #f6f0fa;
@@ -25,12 +87,11 @@
       --faint: #85799a;
       --ok: #4ade80;
       --warn: #fbbf24;
-      --off: #94a3b8;
-      /* Accent follows the selected festival (set from JS) */
-      --accent: #ff9f1c;
-      --accent-2: #e5383b;
-      --radius: 18px;
-      --mono: 'JetBrains Mono', ui-monospace, monospace;
+      --code-bg: #0b0711;
+      --code-text: #e9dcf5;
+      --glow: 22%;
+      --accent-ink: var(--accent);
+      --accent-2-ink: var(--accent-2);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -38,10 +99,10 @@
     html { scroll-behavior: smooth; }
 
     body {
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      font-family: 'Poppins', system-ui, -apple-system, sans-serif;
       background:
-        radial-gradient(1200px 600px at 15% -10%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 60%),
-        radial-gradient(900px 500px at 100% 10%, color-mix(in srgb, var(--accent-2) 16%, transparent), transparent 60%),
+        radial-gradient(1200px 600px at 15% -10%, color-mix(in srgb, var(--accent) var(--glow), transparent), transparent 60%),
+        radial-gradient(900px 500px at 100% 10%, color-mix(in srgb, var(--accent-2) calc(var(--glow) * 0.7), transparent), transparent 60%),
         var(--bg);
       background-attachment: fixed;
       color: var(--text);
@@ -71,6 +132,14 @@
       padding: 8px 12px; border-radius: 10px; transition: color .2s, background .2s;
     }
     .nav-links a:hover { color: var(--text); background: var(--surface-2); }
+    .theme-toggle {
+      appearance: none; cursor: pointer; width: 38px; height: 38px; border-radius: 10px; flex: none;
+      background: transparent; border: 1px solid var(--border-strong); color: var(--text);
+      font-size: 17px; line-height: 1; display: inline-grid; place-items: center;
+      transition: background .2s;
+    }
+    .theme-toggle:hover { background: var(--hover); }
+    .theme-toggle:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }
     .nav-links a.gh { color: var(--text); border: 1px solid var(--border-strong); }
     @media (max-width: 640px) { .nav-links a:not(.gh) { display: none; } }
 
@@ -89,13 +158,13 @@
     @keyframes pulse { 50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--ok) 6%, transparent); } }
 
     h1 {
-      font-family: 'Fraunces', Georgia, serif;
-      font-size: clamp(2.6rem, 7vw, 4.6rem);
-      font-weight: 800; line-height: 1.04; letter-spacing: -0.02em;
+      font-family: 'Poppins', system-ui, sans-serif;
+      font-size: clamp(2.3rem, 6.4vw, 4.2rem);
+      font-weight: 700; line-height: 1.1; letter-spacing: -0.03em;
       margin-bottom: 20px;
     }
     h1 .grad {
-      background: linear-gradient(100deg, var(--accent), var(--accent-2));
+      background: linear-gradient(100deg, var(--accent-ink), var(--accent-2-ink));
       -webkit-background-clip: text; background-clip: text; color: transparent;
     }
     .lede { font-size: clamp(1.02rem, 2.2vw, 1.2rem); color: var(--muted); max-width: 640px; margin: 0 auto 32px; }
@@ -103,11 +172,11 @@
     .one-liner {
       display: flex; align-items: center; gap: 12px;
       max-width: 720px; margin: 0 auto 18px;
-      background: rgba(0, 0, 0, 0.35); border: 1px solid var(--border);
+      background: var(--code-bg); border: 1px solid var(--border);
       border-radius: 14px; padding: 8px 8px 8px 18px; text-align: left;
     }
     .one-liner code {
-      flex: 1; min-width: 0; font-family: var(--mono); font-size: 13px; color: #e9dcf5;
+      flex: 1; min-width: 0; font-family: var(--mono); font-size: 13px; color: var(--code-text);
       white-space: nowrap; overflow-x: auto; scrollbar-width: none;
     }
     .one-liner code::-webkit-scrollbar { display: none; }
@@ -117,7 +186,7 @@
     /* ---------- Buttons ---------- */
     .btn {
       appearance: none; border: 1px solid transparent; cursor: pointer;
-      font: 600 14px/1 'Inter', sans-serif; color: var(--text);
+      font: 600 14px/1 'Poppins', sans-serif; color: var(--text);
       padding: 12px 18px; border-radius: 12px; white-space: nowrap;
       transition: transform .15s, box-shadow .2s, background .2s, border-color .2s;
       display: inline-flex; align-items: center; justify-content: center; gap: 8px;
@@ -131,13 +200,13 @@
     }
     .btn-primary:hover { transform: translateY(-1px); }
     .btn-ghost { background: var(--surface-2); border-color: var(--border); }
-    .btn-ghost:hover { background: rgba(255,255,255,.13); }
+    .btn-ghost:hover { background: var(--hover); }
     .btn-sm { padding: 9px 14px; font-size: 13px; border-radius: 10px; }
 
     /* ---------- Sections ---------- */
     section { padding: 36px 0; }
     .section-head { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
-    h2 { font-family: 'Fraunces', Georgia, serif; font-size: clamp(1.6rem, 3.5vw, 2.1rem); font-weight: 600; letter-spacing: -0.01em; }
+    h2 { font-family: 'Poppins', system-ui, sans-serif; font-size: clamp(1.6rem, 3.5vw, 2.1rem); font-weight: 600; letter-spacing: -0.01em; }
     .section-head p { color: var(--muted); font-size: 15px; }
 
     .card {
@@ -174,7 +243,7 @@
     .tc-desc { color: var(--muted); font-size: 13.5px; margin-bottom: 12px; }
     .tc-date { font-family: var(--mono); font-size: 12px; color: var(--faint); }
     .tag {
-      font: 600 10.5px/1 'Inter', sans-serif; letter-spacing: .04em; text-transform: uppercase;
+      font: 600 10.5px/1 'Poppins', sans-serif; letter-spacing: .04em; text-transform: uppercase;
       padding: 4px 7px; border-radius: 6px; background: color-mix(in srgb, var(--ok) 18%, transparent); color: var(--ok);
     }
 
@@ -186,17 +255,17 @@
     .field-label { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
     .field-label small { font-weight: 500; color: var(--faint); }
 
-    .seg { display: grid; grid-template-columns: repeat(3, 1fr); background: rgba(0,0,0,.3); border: 1px solid var(--border); border-radius: 12px; padding: 4px; gap: 4px; }
+    .seg { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--inset); border: 1px solid var(--border); border-radius: 12px; padding: 4px; gap: 4px; }
     .seg button {
       appearance: none; border: 0; background: transparent; color: var(--muted);
-      font: 600 14px/1 'Inter', sans-serif; padding: 10px; border-radius: 9px; cursor: pointer; transition: background .2s, color .2s;
+      font: 600 14px/1 'Poppins', sans-serif; padding: 10px; border-radius: 9px; cursor: pointer; transition: background .2s, color .2s;
     }
     .seg button[aria-pressed="true"] { background: var(--surface-2); color: var(--text); box-shadow: inset 0 0 0 1px var(--border-strong); }
 
     input[type="date"], input[type="range"] { width: 100%; }
     input[type="date"] {
-      background: rgba(0,0,0,.3); border: 1px solid var(--border); border-radius: 12px;
-      color: var(--text); font: 500 14px 'Inter', sans-serif; padding: 11px 14px; color-scheme: dark;
+      background: var(--inset); border: 1px solid var(--border); border-radius: 12px;
+      color: var(--text); font: 500 14px 'Poppins', sans-serif; padding: 11px 14px;
     }
     input[type="date"]:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
     input[type="range"] { accent-color: var(--accent); }
@@ -205,7 +274,7 @@
 
     .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
     .chip {
-      appearance: none; cursor: pointer; font: 500 12px/1 'Inter', sans-serif; color: var(--muted);
+      appearance: none; cursor: pointer; font: 500 12px/1 'Poppins', sans-serif; color: var(--muted);
       background: transparent; border: 1px dashed var(--border-strong); border-radius: 999px; padding: 7px 10px;
     }
     .chip:hover { color: var(--text); border-style: solid; }
@@ -215,7 +284,7 @@
     .switch-row small { display: block; color: var(--faint); font-size: 12px; font-weight: 400; }
     .switch { position: relative; width: 44px; height: 26px; flex: none; }
     .switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; z-index: 1; }
-    .switch .track { position: absolute; inset: 0; background: rgba(255,255,255,.16); border-radius: 99px; transition: background .2s; }
+    .switch .track { position: absolute; inset: 0; background: var(--track); border-radius: 99px; transition: background .2s; }
     .switch .track::after { content: ''; position: absolute; width: 20px; height: 20px; left: 3px; top: 3px; border-radius: 50%; background: #fff; transition: transform .2s; }
     .switch input:checked + .track { background: var(--accent); }
     .switch input:checked + .track::after { transform: translateX(18px); }
@@ -225,14 +294,14 @@
     .actions .btn { flex: 1; }
 
     .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
-    .stat { background: rgba(0,0,0,.28); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; min-width: 0; }
+    .stat { background: var(--inset); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; min-width: 0; }
     .stat-label { font-size: 11.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--faint); margin-bottom: 6px; }
     .stat-value { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .stat-value.mono { font-family: var(--mono); font-weight: 500; }
     .stat.wide { grid-column: 1 / -1; }
 
     .notice {
-      font-size: 13.5px; color: var(--muted); background: rgba(0,0,0,.25);
+      font-size: 13.5px; color: var(--muted); background: var(--inset);
       border: 1px solid var(--border); border-left: 3px solid var(--accent);
       border-radius: 10px; padding: 12px 14px;
     }
@@ -244,18 +313,19 @@
     .tabs::-webkit-scrollbar { display: none; }
     .tab {
       appearance: none; background: transparent; border: 0; cursor: pointer; white-space: nowrap;
-      font: 600 13.5px/1 'Inter', sans-serif; color: var(--faint);
+      font: 600 13.5px/1 'Poppins', sans-serif; color: var(--faint);
       padding: 12px 14px; border-bottom: 2px solid transparent; margin-bottom: -1px;
     }
     .tab:hover { color: var(--text); }
-    .tab[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); }
+    .tab[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent-ink); }
     .code-wrap { position: relative; }
     pre {
-      background: #0b0711; border: 1px solid var(--border); border-radius: 14px;
+      background: var(--code-bg); border: 1px solid var(--border); border-radius: 14px;
       padding: 20px 20px 20px; padding-right: 96px; overflow-x: auto;
-      font: 13px/1.65 var(--mono); color: #e9dcf5; min-height: 120px;
+      font: 13px/1.65 var(--mono); color: var(--code-text); min-height: 120px;
     }
-    .code-wrap .btn { position: absolute; top: 12px; right: 12px; }
+    .code-wrap .btn { position: absolute; top: 12px; right: 12px; color: var(--code-text); background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.16); }
+    .code-wrap .btn:hover { background: rgba(255,255,255,.16); }
     .code-note { margin-top: 10px; font-size: 13px; color: var(--faint); }
 
     /* ---------- Features ---------- */
@@ -304,6 +374,7 @@
         <a href="#embed">Embed</a>
         <a href="#calendar">Calendar</a>
         <a class="gh" href="https://github.com/PuspaRaj-Subedi/festival-overlay" target="_blank" rel="noopener">★ GitHub</a>
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to dark mode">🌙</button>
       </div>
     </div>
   </nav>
@@ -483,7 +554,7 @@
     var META = {
       auto:          { emoji: '✨', name: 'Auto',          desc: 'Picks the festival for the date. Does nothing on ordinary days.', c: ['#c084fc', '#f472b6'] },
       dashain:       { emoji: '🪁', name: 'Dashain',       desc: 'Flying kites, falling sayapatri petals, red tika glow.',           c: ['#ff9f1c', '#e5383b'] },
-      tihar:         { emoji: '🪔', name: 'Tihar',         desc: 'Twinkling light strings, glowing diyas, marigold petals.',         c: ['#ffb300', '#e91e63'] },
+      tihar:         { emoji: '🪔', name: 'Tihar',         desc: 'Twinkling light strings, glowing diyas, tumbling sayapatri flowers.',         c: ['#ffb300', '#e91e63'] },
       'womens-day':  { emoji: '🌸', name: "Women's Day",   desc: 'Purple and gold confetti with rising flowers.',                     c: ['#a855f7', '#facc15'] },
       'fathers-day': { emoji: '👔', name: "Father's Day",  desc: 'Floating stars, balloons and neckties.',                            c: ['#38bdf8', '#6366f1'] },
       holi:          { emoji: '🎨', name: 'Holi',          desc: 'Gulal bursts, pichkaari streams and colour balloons.',              c: ['#22d3ee', '#ec4899'] }
@@ -822,6 +893,26 @@
     });
     $('copy').addEventListener('click', function () { copy($('code').textContent, $('copy')); });
     $('hero-copy').addEventListener('click', function () { copy($('hero-snippet').textContent, $('hero-copy')); });
+
+    // ---------- Light / dark toggle ----------
+    var darkQuery = matchMedia('(prefers-color-scheme: dark)');
+    function isDark() {
+      var t = document.documentElement.dataset.theme;
+      return t ? t === 'dark' : darkQuery.matches;
+    }
+    function syncToggle() {
+      var dark = isDark();
+      $('theme-toggle').textContent = dark ? '☀️' : '🌙';
+      $('theme-toggle').setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+    }
+    $('theme-toggle').addEventListener('click', function () {
+      var next = isDark() ? 'light' : 'dark';
+      document.documentElement.dataset.theme = next;
+      try { localStorage.setItem('fo-theme', next); } catch (e) {}
+      syncToggle();
+    });
+    darkQuery.addEventListener('change', syncToggle);
+    syncToggle();
 
     // ---------- FPS meter ----------
     var frames = 0, last = performance.now();

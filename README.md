@@ -42,7 +42,7 @@ Drawn with pure Canvas 2D, zero dependencies, and date-aware so the right festiv
 | id | Festival | What you see | When `auto` shows it |
 |---|---|---|---|
 | `dashain` | Dashain 🇳🇵 | Flying kites (changa), falling sayapatri petals, red tika glow | Calendar range (lunar) |
-| `tihar` | Tihar 🇳🇵 | Twinkling light strings, glowing diyas, marigold petals | Calendar range (lunar) |
+| `tihar` | Tihar 🇳🇵 | Twinkling light strings, glowing diyas, tumbling sayapatri (marigold) flowers | Calendar range (lunar) |
 | `holi` | Holi | Gulal powder bursts, pichkaari streams, colour balloons | Calendar range (lunar) |
 | `womens-day` | International Women's Day | Purple and gold confetti, rising flowers | 8 March |
 | `fathers-day` | Father's Day | Floating stars, balloons, neckties | 3rd Sunday of June |
@@ -448,9 +448,9 @@ CI fails if any budget is exceeded.
 
 | Bundle | gzipped | Budget |
 |---|---|---|
-| Full bundle with all 5 themes (`umd.min.js`) | **8.1 KB** | 35 KB |
-| Auto bundle (`auto.min.js`) | **8.1 KB** | 35 KB |
-| One theme (`themes/*.esm.js`) | **1.0 – 1.5 KB** | 6 KB |
+| Full bundle with all 5 themes (`umd.min.js`) | **8.6 KB** | 35 KB |
+| Auto bundle (`auto.min.js`) | **8.6 KB** | 35 KB |
+| One theme (`themes/*.esm.js`) | **1.0 – 1.9 KB** | 6 KB |
 
 ---
 

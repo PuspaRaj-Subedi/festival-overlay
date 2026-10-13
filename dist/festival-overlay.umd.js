@@ -734,6 +734,38 @@ var FestivalOverlay = (() => {
     ctx.fill();
     ctx.restore();
   }
+  function fillPetalRing(ctx, count, dist, lobe, offset, color) {
+    const step = Math.PI * 2 / count;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    for (let i = 0; i < count; i++) {
+      const a = offset + i * step;
+      const cx = Math.cos(a) * dist;
+      const cy = Math.sin(a) * dist;
+      ctx.moveTo(cx + lobe, cy);
+      ctx.arc(cx, cy, lobe, 0, Math.PI * 2);
+    }
+    ctx.fill();
+  }
+  function drawSayapatri(ctx, x, y, r, angle, squash, dark, base, light) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    ctx.scale(1, squash);
+    fillPetalRing(ctx, 12, r * 0.72, r * 0.3, 0, dark);
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.75, 0, Math.PI * 2);
+    ctx.fill();
+    fillPetalRing(ctx, 12, r * 0.64, r * 0.24, 0.26, base);
+    fillPetalRing(ctx, 8, r * 0.4, r * 0.24, 0.4, base);
+    fillPetalRing(ctx, 8, r * 0.36, r * 0.16, 0.8, light);
+    fillPetalRing(ctx, 5, r * 0.16, r * 0.15, 0.2, light);
+    ctx.fillStyle = dark;
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.09, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
   function drawDiya(ctx, x, y, size, flameFlicker, bodyColor, flameColor) {
     ctx.save();
     ctx.translate(x, y);
@@ -906,6 +938,8 @@ var FestivalOverlay = (() => {
     caps: { low: 30, medium: 70, high: 140 },
     init(ctx, state) {
       state.time = 0;
+      const warm = state.palette.filter((c) => c.r > 180 && c.g > 90 && c.b < 120);
+      state.flowerPalette = warm.length ? warm : state.palette;
     },
     drawBackground(ctx, state) {
       state.time = (state.time || 0) + 0.016;
@@ -973,66 +1007,35 @@ var FestivalOverlay = (() => {
     onClick(x, y, state, addParticle) {
       const count = 20;
       for (let i = 0; i < count; i++) {
-        const colorObj = pick(state.palette);
-        const colorStr = `rgb(${colorObj.r},${colorObj.g},${colorObj.b})`;
         const angle = i / count * Math.PI * 2 + rand(-0.2, 0.2);
         const speed = rand(50, 180);
-        const isPetal = Math.random() < 0.75;
-        addParticle({
-          x: x + rand(-10, 10),
-          y: y + rand(-10, 10),
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed,
-          size: isPetal ? rand(7, 14) : rand(4, 8),
-          angle: rand(0, Math.PI * 2),
-          vAngle: rand(-3, 3),
-          kind: isPetal ? "petal" : "sparkle",
-          color: isPetal ? colorStr : "#ffd700",
-          life: 1,
-          maxLife: rand(2, 4.5)
-        });
+        const r = Math.random();
+        const p = r < 0.45 ? makeFlower(state, rand(6, 11)) : r < 0.75 ? makePetal(state) : makeSparkle(state);
+        p.x = x + rand(-10, 10);
+        p.y = y + rand(-10, 10);
+        p.vx = Math.cos(angle) * speed;
+        p.vy = Math.sin(angle) * speed;
+        p.maxLife = rand(2, 4.5);
+        addParticle(p);
       }
     },
     spawn(state) {
-      const isPetal = Math.random() < 0.75;
-      const colorObj = pick(state.palette);
-      const colorStr = `rgb(${colorObj.r},${colorObj.g},${colorObj.b})`;
-      if (isPetal) {
-        return {
-          x: rand(0, state.width),
-          y: rand(-20, -10),
-          vx: rand(-20, 20),
-          vy: rand(40, 90),
-          size: rand(6, 12),
-          angle: rand(0, Math.PI * 2),
-          vAngle: rand(-2, 2),
-          kind: "petal",
-          color: colorStr,
-          life: 1,
-          maxLife: rand(8, 14)
-        };
-      } else {
-        return {
-          x: rand(0, state.width),
-          y: rand(0, state.height),
-          vx: rand(-8, 8),
-          vy: rand(-15, -5),
-          size: rand(3, 7),
-          kind: "sparkle",
-          color: "#ffd700",
-          life: 1,
-          maxLife: rand(3, 6)
-        };
-      }
+      const r = Math.random();
+      if (r < 0.55) return makeFlower(state, rand(9, 16));
+      if (r < 0.75) return makePetal(state);
+      const p = makeSparkle(state);
+      p.y = rand(0, state.height);
+      return p;
     },
     update(p, dt, state) {
       p.life -= dt / p.maxLife;
       if (p.life <= 0) return false;
-      if (p.kind === "petal") {
+      if (p.kind === "petal" || p.kind === "flower") {
         p.x += (p.vx + Math.sin(state.time * 2 + p.y * 0.05) * 15) * dt;
         p.y += p.vy * dt;
         p.angle += p.vAngle * dt;
-        if (p.y > state.height + 20) return false;
+        if (p.kind === "flower") p.tilt += p.vTilt * dt;
+        if (p.y > state.height + 30) return false;
       } else if (p.kind === "sparkle") {
         p.x += p.vx * dt;
         p.y += p.vy * dt;
@@ -1042,7 +1045,10 @@ var FestivalOverlay = (() => {
     draw(ctx, p) {
       ctx.save();
       ctx.globalAlpha = clamp(p.life * 2, 0, 1);
-      if (p.kind === "petal") {
+      if (p.kind === "flower") {
+        const squash = 0.45 + 0.55 * Math.abs(Math.cos(p.tilt));
+        drawSayapatri(ctx, p.x, p.y, p.size, p.angle, squash, p.dark, p.color, p.light);
+      } else if (p.kind === "petal") {
         drawPetal(ctx, p.x, p.y, p.size, p.angle, p.color);
       } else if (p.kind === "sparkle") {
         drawSparkle(ctx, p.x, p.y, p.size, p.color, p.life);
@@ -1050,6 +1056,60 @@ var FestivalOverlay = (() => {
       ctx.restore();
     }
   };
+  function shade(c, k) {
+    if (k <= 1) return `rgb(${Math.round(c.r * k)},${Math.round(c.g * k)},${Math.round(c.b * k)})`;
+    const t = k - 1;
+    return `rgb(${Math.round(c.r + (255 - c.r) * t)},${Math.round(c.g + (255 - c.g) * t)},${Math.round(c.b + (255 - c.b) * t)})`;
+  }
+  function makeFlower(state, size) {
+    const c = pick(state.flowerPalette || state.palette);
+    return {
+      x: rand(0, state.width),
+      y: rand(-30, -15),
+      vx: rand(-20, 20),
+      vy: rand(35, 75),
+      size,
+      angle: rand(0, Math.PI * 2),
+      vAngle: rand(-1.5, 1.5),
+      tilt: rand(0, Math.PI * 2),
+      vTilt: rand(-2.5, 2.5),
+      kind: "flower",
+      dark: shade(c, 0.72),
+      color: shade(c, 1),
+      light: shade(c, 1.35),
+      life: 1,
+      maxLife: rand(9, 15)
+    };
+  }
+  function makePetal(state) {
+    const c = pick(state.flowerPalette || state.palette);
+    return {
+      x: rand(0, state.width),
+      y: rand(-20, -10),
+      vx: rand(-20, 20),
+      vy: rand(40, 90),
+      size: rand(5, 9),
+      angle: rand(0, Math.PI * 2),
+      vAngle: rand(-2, 2),
+      kind: "petal",
+      color: shade(c, 1),
+      life: 1,
+      maxLife: rand(8, 14)
+    };
+  }
+  function makeSparkle(state) {
+    return {
+      x: rand(0, state.width),
+      y: rand(-20, -10),
+      vx: rand(-8, 8),
+      vy: rand(-15, -5),
+      size: rand(3, 7),
+      kind: "sparkle",
+      color: "#ffd700",
+      life: 1,
+      maxLife: rand(3, 6)
+    };
+  }
   var tihar_default = tiharTheme;
 
   // src/themes/dashain.js

@@ -25,6 +25,68 @@ export function drawPetal(ctx, x, y, size, angle, color) {
 }
 
 /**
+ * Fills one ring of round petal lobes as a single path, so a whole ring costs one fill.
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {number} count
+ * @param {number} dist
+ * @param {number} lobe
+ * @param {number} offset
+ * @param {string} color
+ */
+function fillPetalRing(ctx, count, dist, lobe, offset, color) {
+  const step = (Math.PI * 2) / count;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  for (let i = 0; i < count; i++) {
+    const a = offset + i * step;
+    const cx = Math.cos(a) * dist;
+    const cy = Math.sin(a) * dist;
+    ctx.moveTo(cx + lobe, cy);
+    ctx.arc(cx, cy, lobe, 0, Math.PI * 2);
+  }
+  ctx.fill();
+}
+
+/**
+ * Draws a sayapatri (marigold) bloom: a ruffled pom-pom of staggered petal rings.
+ * Colours are passed in pre-built so drawing allocates nothing.
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {number} x
+ * @param {number} y
+ * @param {number} r outer radius
+ * @param {number} angle
+ * @param {number} squash 0..1 vertical scale, fakes the flower tumbling in 3D
+ * @param {string} dark outer petals and centre
+ * @param {string} base
+ * @param {string} light inner highlight petals
+ */
+export function drawSayapatri(ctx, x, y, r, angle, squash, dark, base, light) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  ctx.scale(1, squash);
+
+  // Scalloped outer edge over a solid disc so no gaps show between lobes
+  fillPetalRing(ctx, 12, r * 0.72, r * 0.3, 0, dark);
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.75, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Staggered rings get lighter towards the middle, which reads as dense ruffles
+  fillPetalRing(ctx, 12, r * 0.64, r * 0.24, 0.26, base);
+  fillPetalRing(ctx, 8, r * 0.4, r * 0.24, 0.4, base);
+  fillPetalRing(ctx, 8, r * 0.36, r * 0.16, 0.8, light);
+  fillPetalRing(ctx, 5, r * 0.16, r * 0.15, 0.2, light);
+
+  ctx.fillStyle = dark;
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.09, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+/**
  * Draws a Diya (earthen lamp) with flickering flame.
  * @param {CanvasRenderingContext2D} ctx 
  * @param {number} x 
